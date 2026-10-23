@@ -13,7 +13,9 @@
 2. **Dynamic programming:** maximum alternating sum and string-construction operations.
 3. **Recursion and arrays:** split a contiguous array when both parts have equal sums.
 4. **Bit manipulation and strings:** XOR operations, binary-string generation, numerical strings.
-5. **Written explanations:** algorithm idea, steps, correctness, complexity, and edge cases.
+5. **Binary search on the answer:** minimum truck capacity with a greedy feasibility check.
+6. **DP state design:** reported amusement-park minimum-fare problem; read the exact free-ride rule carefully.
+7. **Written explanations:** algorithm idea, steps, correctness, complexity, and edge cases.
 
 Recent 2026 candidate reports describe variations in the assessment. Some report a second coding stage with medium-to-hard problems involving BFS, DP, bit manipulation, recursion, arrays, and strings. Some reports mention separate written fields for explaining an approach. These reports should guide practice, not be treated as a prediction of the exact paper.
 
@@ -374,7 +376,100 @@ class Solution {
 
 If the problem adds a constraint—such as no consecutive ones or exactly `k` ones—check the condition during recursion and prune invalid branches.
 
-## 8. Written approach questions
+## 8. Reported pattern: Amusement park — minimum total fare
+
+**Topics:** Dynamic programming, state design, careful interpretation of rules
+
+### Reported problem
+
+You are given `N` rides and an array of fares. The candidate report describes a rule where paying for ride `i` makes the next `i` rides free. Find the minimum total fare needed to ride all rides.
+
+This question was reported by a candidate in August 2026. The short public description does not fully specify whether a ride that is already free can be purchased to trigger another free interval, or precisely how the free interval is counted. Those details change the recurrence, so do not memorize an assumed formula without checking the full assessment statement.
+
+### How to approach it
+
+1. Read the indexing carefully: is the first ride numbered `0` or `1`?
+2. Clarify exactly which rides become free after paying for ride `i` (for example, `i+1` through `2*i`, or another range).
+3. Define a DP state that captures the next ride to handle or the farthest ride already covered.
+4. For each legal payment choice, calculate the next state reached after the free rides are applied.
+5. Take the minimum total fare across legal choices; test small cases manually before coding.
+
+### Small-case checks
+
+- `N = 1`: the answer should be the fare for the only ride, unless the statement gives a special rule.
+- Check the first ride and last ride carefully for off-by-one errors.
+- Compare a case where one expensive payment covers many rides against several cheaper payments.
+- Confirm whether buying a ride that is already free is allowed.
+
+**Important:** The report confirms the general problem theme, not the exact statement or constraints. If you get the original wording, derive the recurrence from those rules rather than relying on an unverified online version.
+
+## 9. Reported pattern: Minimum truck capacity to ship ordered boxes
+
+**Topics:** Binary search on the answer, greedy feasibility check
+
+### Problem
+
+You are given an array `weights` in the order boxes must be shipped and an integer `days`. Each trip carries a contiguous sequence of boxes, and the order cannot change. Find the minimum capacity that lets you ship all boxes within at most `days` trips.
+
+### Java solution
+
+```java
+class Solution {
+    public int shipWithinDays(int[] weights, int days) {
+        int low = 0;
+        long high = 0;
+
+        for (int weight : weights) {
+            low = Math.max(low, weight);
+            high += weight;
+        }
+
+        long left = low;
+        while (left < high) {
+            long capacity = left + (high - left) / 2;
+            int trips = 1;
+            long load = 0;
+
+            for (int weight : weights) {
+                if (load + weight > capacity) {
+                    trips++;
+                    load = 0;
+                }
+                load += weight;
+            }
+
+            if (trips <= days) {
+                high = capacity;
+            } else {
+                left = capacity + 1;
+            }
+        }
+
+        return (int) left;
+    }
+}
+```
+
+### Explanation
+
+- The capacity cannot be smaller than the heaviest box: `low = max(weights)`.
+- A capacity equal to the sum of all weights is always enough if at least one trip is allowed: `high = sum(weights)`.
+- For a trial capacity, greedily load boxes in their given order. Start a new trip whenever the next box would exceed the capacity.
+- If the number of trips is at most `days`, this capacity works, so try a smaller one. Otherwise, increase the capacity.
+- Feasibility is monotonic: if capacity `C` works, any larger capacity also works. This makes binary search valid.
+
+- **Time:** `O(n log S)`, where `S` is the sum of all weights.
+- **Extra space:** `O(1)`.
+
+### Example
+
+`weights = [1, 2, 3, 4, 5]`, `days = 3` → minimum capacity is `6`.
+
+One valid shipping plan is `[1,2,3]`, `[4]`, `[5]`, with trip loads `6`, `4`, and `5`.
+
+**Common mistakes:** sorting the weights (the order must remain unchanged), using the average as the answer, and forgetting that the capacity must fit the heaviest individual box.
+
+## 10. Written approach questions
 
 If the assessment provides text fields for explaining your approach, use this structure:
 
@@ -390,7 +485,7 @@ If the assessment provides text fields for explaining your approach, use this st
 
 Keep explanations clear and technically justified.
 
-## 9. Focused mock assessment
+## 11. Focused mock assessment
 
 **Suggested format:** 150 minutes, 5 questions. This mirrors a reported pattern and is not a verified official paper.
 
@@ -409,7 +504,7 @@ Keep explanations clear and technically justified.
 - **Next 40 minutes:** Write both approach explanations.
 - **Final 5 minutes:** Check syntax, input/output format, integer overflow, and boundary conditions.
 
-## 10. Last-night revision plan
+## 12. Last-night revision plan
 
 ### First 90 minutes — Learn and code
 
@@ -435,9 +530,9 @@ Review:
 - Sorting and basic string operations
 - Off-by-one errors and boundary checks
 
-If you have less time, prioritize **BFS, alternating-sum DP, recursion, and written explanations**.
+If you have less time, prioritize **BFS, alternating-sum DP, recursion, truck-capacity binary search, and written explanations**. Review the amusement-park problem from its exact statement because the reported summary is not detailed enough to safely prescribe one recurrence.
 
-## 11. Final exam checklist
+## 13. Final exam checklist
 
 - Read the exact problem statement and constraints.
 - Match the required class name, method signature, and input/output format.
@@ -451,4 +546,4 @@ If you have less time, prioritize **BFS, alternating-sum DP, recursion, and writ
 
 ## Source notes
 
-This guide is based on publicly reported candidate experiences and preparation material available in 2026. Candidate posts are anecdotal; question wording, constraints, and assessment format can differ by campus and hiring batch. Treat the examples above as practice problems, not official Virtusa questions.
+This guide is based on publicly reported candidate experiences and preparation material available in 2026. Candidate posts are anecdotal; question wording, constraints, and assessment format can differ by campus and hiring batch. The amusement-park summary is intentionally flagged as underspecified because the public report does not establish all rules needed for a reliable exact recurrence. Treat the examples above as practice problems, not official Virtusa questions.
